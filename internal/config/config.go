@@ -5,43 +5,46 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 // Config holds all configuration for the application
 type Config struct {
-	Server        ServerConfig   `json:"server"`
-	Auth          AuthConfig     `json:"auth"`
-	Database      DatabaseConfig `json:"database"`
-	HomeAssistant HAConfig       `json:"home_assistant"`
+	Server        ServerConfig   `json:"server" yaml:"server"`
+	Auth          AuthConfig     `json:"auth" yaml:"auth"`
+	Database      DatabaseConfig `json:"database" yaml:"database"`
+	HomeAssistant HAConfig       `json:"home_assistant" yaml:"home_assistant"`
 }
 
 // ServerConfig holds server-related configuration
 type ServerConfig struct {
-	Host string `json:"host"`
-	Port int    `json:"port"`
+	Host string `json:"host" yaml:"host"`
+	Port int    `json:"port" yaml:"port"`
 }
 
 // AuthConfig holds authentication-related configuration
 type AuthConfig struct {
-	User               string        `json:"user"`
-	Password           string        `json:"password"`
-	SecretKey          string        `json:"secret_key"`
-	AccessTokenExpiry  time.Duration `json:"access_token_expiry"`
-	RefreshTokenExpiry time.Duration `json:"refresh_token_expiry"`
-	NonceExpiry        time.Duration `json:"nonce_expiry"`
+	User               string        `json:"user" yaml:"user"`
+	Password           string        `json:"password" yaml:"password"`
+	SecretKey          string        `json:"secret_key" yaml:"secret_key"`
+	AccessTokenExpiry  time.Duration `json:"access_token_expiry" yaml:"access_token_expiry"`
+	RefreshTokenExpiry time.Duration `json:"refresh_token_expiry" yaml:"refresh_token_expiry"`
+	NonceExpiry        time.Duration `json:"nonce_expiry" yaml:"nonce_expiry"`
 }
 
 // DatabaseConfig holds database-related configuration
 type DatabaseConfig struct {
-	Path string `json:"path"`
+	Path string `json:"path" yaml:"path"`
 }
 
 // HAConfig holds Home Assistant connection configuration
 type HAConfig struct {
-	URL   string `json:"url"`
-	Token string `json:"token"`
+	URL   string `json:"url" yaml:"url"`
+	Token string `json:"token" yaml:"token"`
 }
 
 var (
@@ -86,7 +89,7 @@ func LoadConfig(configPath string) (*Config, error) {
 			file, err := os.Open(absPath)
 			if err != nil {
 				if os.IsNotExist(err) {
-					// Create default config file if it doesn't exist
+					// Create default config file based on file extension
 					saveErr := SaveConfig(configPath, instance)
 					if saveErr != nil {
 						err = fmt.Errorf("error creating default config: %w", saveErr)
@@ -100,8 +103,19 @@ func LoadConfig(configPath string) (*Config, error) {
 			}
 			defer file.Close()
 
-			decoder := json.NewDecoder(file)
-			err = decoder.Decode(instance)
+			// Determine file format based on extension
+			ext := strings.ToLower(filepath.Ext(configPath))
+			switch ext {
+			case ".json":
+				decoder := json.NewDecoder(file)
+				err = decoder.Decode(instance)
+			case ".yaml", ".yml":
+				decoder := yaml.NewDecoder(file)
+				err = decoder.Decode(instance)
+			default:
+				err = fmt.Errorf("unsupported config file format: %s, supported formats are: .json, .yaml, .yml", ext)
+			}
+
 			if err != nil {
 				err = fmt.Errorf("error decoding config file: %w", err)
 				return
@@ -131,10 +145,23 @@ func SaveConfig(configPath string, cfg *Config) error {
 	}
 	defer file.Close()
 
-	encoder := json.NewEncoder(file)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(cfg); err != nil {
-		return fmt.Errorf("error encoding config: %w", err)
+	// Determine file format based on extension
+	ext := strings.ToLower(filepath.Ext(configPath))
+	switch ext {
+	case ".json":
+		encoder := json.NewEncoder(file)
+		encoder.SetIndent("", "  ")
+		if err := encoder.Encode(cfg); err != nil {
+			return fmt.Errorf("error encoding config to JSON: %w", err)
+		}
+	case ".yaml", ".yml":
+		encoder := yaml.NewEncoder(file)
+		encoder.SetIndent(2)
+		if err := encoder.Encode(cfg); err != nil {
+			return fmt.Errorf("error encoding config to YAML: %w", err)
+		}
+	default:
+		return fmt.Errorf("unsupported config file format: %s, supported formats are: .json, .yaml, .yml", ext)
 	}
 
 	return nil

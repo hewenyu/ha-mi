@@ -13,7 +13,7 @@ import (
 
 func main() {
 	// Parse command line flags
-	configPath := flag.String("config", "config.json", "Path to configuration file")
+	configPath := flag.String("config", "config.yaml", "Path to configuration file (supports .yaml, .yml, .json)")
 	flag.Parse()
 
 	// Load configuration

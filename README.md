@@ -33,7 +33,32 @@ go build -o ha-mi cmd/server/main.go
 
 ## 配置文件
 
-配置文件格式为 JSON，默认配置如下：
+配置文件支持 YAML 和 JSON 格式，默认使用 YAML 格式。默认配置如下：
+
+### YAML 格式 (config.yaml)
+
+```yaml
+server:
+  host: 0.0.0.0
+  port: 8080
+
+auth:
+  user: admin
+  password: admin
+  secret_key: change-me-in-production-please
+  access_token_expiry: 86400000000000  # 24 hours in nanoseconds
+  refresh_token_expiry: 2592000000000000  # 30 days in nanoseconds
+  nonce_expiry: 120000000000  # 2 minutes in nanoseconds
+
+database:
+  path: ha-mi.db
+
+home_assistant:
+  url: http://localhost:8123
+  token: ""  # Put your Home Assistant long-lived access token here
+```
+
+### JSON 格式 (config.json)
 
 ```json
 {
