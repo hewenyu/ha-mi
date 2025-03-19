@@ -175,4 +175,8 @@ POST /api/v1/auth/refresh
 
 ## 设计方案
 
-详细设计方案请参考 [design.md](docs/design.md)。 
+详细设计方案请参考 [design.md](docs/design.md)。
+
+## 开发计划
+
+查看当前开发计划和进度请参考 [todo.md](docs/todo.md)。 
