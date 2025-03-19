@@ -29,3 +29,6 @@ go.work.sum
 
 # json file
 *.json
+
+# config file
+config.yaml
